@@ -2,6 +2,30 @@ const std = @import("std");
 
 const Scanner = @import("zig-wayland").Scanner;
 
+pub fn tracy(b: *std.Build, target: std.Build.ResolvedTarget) *std.Build.Step.Compile {
+    const dep = b.dependency("tracy", .{});
+
+    const lib = b.addStaticLibrary(.{
+        .name = "tracy-client",
+        .target = target,
+        .optimize = .ReleaseFast,
+    });
+    lib.linkLibC();
+    lib.linkLibCpp();
+    lib.addIncludePath(dep.path("public"));
+    lib.addCSourceFiles(.{
+        .root = dep.path(""),
+        .files = &[_][]const u8{
+            "public/TracyClient.cpp",
+        },
+    });
+    lib.root_module.addCMacro("TRACY_ENABLE", "1");
+    lib.root_module.addCMacro("TRACY_MANUAL_LIFETIME", "1");
+    lib.root_module.addCMacro("TRACY_DELAYED_INIT", "1");
+    lib.root_module.addCMacro("TRACY_NO_SAMPLING", "1");
+    return lib;
+}
+
 // Although this function looks imperative, note that its job is to
 // declaratively construct a build graph that will be executed by an external
 // runner.
@@ -27,6 +51,21 @@ pub fn build(b: *std.Build) void {
 
     const wayland = b.createModule(.{ .root_source_file = scanner.result });
 
+    const registry = b.dependency("vulkan_headers", .{}).path("registry/vk.xml");
+    const vk_gen = b.dependency("vulkan_zig", .{}).artifact("generator");
+    const vk_generate_cmd = b.addRunArtifact(vk_gen);
+    vk_generate_cmd.addFileArg(registry);
+
+    const vma = b.addStaticLibrary(.{
+        .name = "vma",
+        .target = target,
+        .optimize = optimize,
+    });
+    vma.linkLibC();
+    vma.linkLibCpp();
+    vma.addIncludePath(b.dependency("vulkan_memory_allocator", .{}).path("include"));
+    vma.addCSourceFile(.{ .file = b.path("src/vma.cpp") });
+
     const exe = b.addExecutable(.{
         .name = "zshell",
         .root_source_file = b.path("src/main.zig"),
@@ -34,11 +73,18 @@ pub fn build(b: *std.Build) void {
         .optimize = optimize,
     });
     exe.root_module.addImport("wayland", wayland);
+    exe.root_module.addAnonymousImport("vulkan", .{
+        .root_source_file = vk_generate_cmd.addOutputFileArg("vk.zig"),
+    });
+    exe.addIncludePath(b.dependency("vulkan_memory_allocator", .{}).path("include"));
     exe.linkLibC();
     exe.linkSystemLibrary("wayland-client");
     exe.linkSystemLibrary("freetype2");
     exe.linkSystemLibrary("harfbuzz");
-    //exe.addCSourceFile(.{ .file = b.path("src/wlr-layer-shell-unstable-v1-protocol.c") });
+    exe.linkSystemLibrary("vulkan");
+    exe.linkLibrary(vma);
+    exe.linkLibrary(tracy(b, target));
+    exe.addIncludePath(b.dependency("tracy", .{}).path("public"));
     scanner.addCSource(exe);
 
     // This declares intent for the executable to be installed into the

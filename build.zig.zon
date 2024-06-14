@@ -19,6 +19,22 @@
             .url = "https://codeberg.org/ifreund/zig-wayland/archive/v0.1.0.tar.gz",
             .hash = "1220b0f8f822c1625af7aae4cb3ab2c4ec1a4c0e99ef32867b2a8d88bb070b3e7f6d",
         },
+        .vulkan_zig = .{
+            .url = "https://github.com/Snektron/vulkan-zig/archive/571cecdda64d548e2df59226ab72112ac0fcdec4.tar.gz",
+            .hash = "1220b7727a5bccd0a6009b3b2b2320d49e49a702a26e3a9450ac63dbc3dbe35527e4",
+        },
+        .vulkan_headers = .{
+            .url = "https://github.com/KhronosGroup/Vulkan-Headers/archive/refs/tags/v1.3.287.tar.gz",
+            .hash = "1220709b08655365991c4cb07968ea51b0de0d3724cad5cab5ea6cae3caaa8ca2405",
+        },
+        .vulkan_memory_allocator = .{
+            .url = "https://github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator/archive/refs/tags/v3.1.0.tar.gz",
+            .hash = "12202822da2e2a4b1ddfa0ee6ac3ac7e660fab5832f33b7402e19c6a1e891f866950",
+        },
+        .tracy = .{
+            .url = "https://github.com/wolfpld/tracy/archive/f04d844515ea67b7b78c7c4e299867a012e832f4.tar.gz",
+            .hash = "122001f5a7176357ebd06cc27ef29c9ae55810f8ec2850983ebd18c177adf7f60188",
+        },
     },
     .paths = .{
         // This makes *all* files, recursively, included in this package. It is generally
